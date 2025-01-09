@@ -12,17 +12,18 @@
 </head>
 <body>
     <div class="container-fluid px-5">
+        
         <div class="d-flex justify-content-center" style="width: 100%;">
             <h1 style="color: grey">To Do List</h1>
         </div>
-
+        <h3 class="m-0 mx-5 p-2">Hi, {{ user.username }}!</h3>
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
         <div class="row-md mx-5 p-2" style="background-color: #f7bebe;min-height: 60vh;border-radius: 12px;">
             <div class="d-flex justify-content-end" style="width: 100%;">
 
                 <button type="button" onclick="showPopup()" class="btn btn-success m-2">Add</button>
-                
+                <button type="button" id="logoutbtn" class="btn btn-danger m-2">Logout</button>
             </div>
             <div class="p-5">
                 
@@ -73,6 +74,24 @@
         var form = $(checkbox).closest('form');
         form.submit();
     }
+
+    document.getElementById('logoutbtn').addEventListener('click', function () {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You will be logged out of your account.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Logout!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to logout URL
+                window.location.href = "{% url 'auth:logout' %}";
+            }
+        });
+    });
 
     $(document).on('click', '.delete-task', function() {
         var taskId = $(this).attr('data-task-id');

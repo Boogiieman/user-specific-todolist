@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Approval</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .table thead {
+            background-color: #343a40;
+            color: white;
+        }
+        .badge {
+            font-size: 0.9em;
+        }
+        .grab {
+            cursor: -webkit-grab; cursor: grab;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4 text-primary">User Approval</h1>
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Hi, {{ user.username }}!</h3>
+            <button type="button" id="logoutbtn" class="btn btn-danger m-2">Logout</button>
+        </div>
+        
+        <div class="table-container">
+            {% if data %}
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Active Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in data %}
+                            <tr>
+                                <td>{{ forloop.counter}}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <form id="statusForm" action="{% url 'auth:approvalupdate' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ user.id }}"> 
+                                        <input type="hidden" name="activity1" id="activity"> 
+                                        <span name="activity" class="grab badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span> 
+                                    </form>
+                                </td>
+                                    <!-- {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <form id="statusForm-{{ user.id }}" action="{% url 'auth:approvalupdate' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ user.id }}"> 
+                                        <input type="hidden" name="activity" value="Inactive">  
+                                        <span class="badge bg-danger" id="badge-{{ user.id }}" onclick="submitForm({{ user.id }})">Inactive</span> 
+                                    </form>
+                                    {% endif %} -->
+                                <!-- </td> -->
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="alert alert-warning text-center" role="alert">
+                    No users to show
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- jQuery from the official CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+    $('td span.badge').on('click', function(e) {
+        e.preventDefault();
+
+        var status = $(this).text().trim();  // Get the current status text
+        var current_status = status === 'Active' ? 'Inactive' : 'Active';  // Toggle status
+        var statusInput = $(this).closest('form').find('#activity');  // Find the hidden input for status
+        
+        // Update the badge color and text
+        if (status === "Active") {
+            $(this).text('Inactive').removeClass("bg-success").addClass("bg-danger");
+        } else {
+            $(this).text('Active').removeClass("bg-danger").addClass("bg-success");
+        }
+
+        // Update the hidden input value with the new status
+        statusInput.val(current_status); 
+
+        // Submit the form after status update
+        var form = $(this).closest('form');
+        form.submit();
+    });
+});
+
+        // Handle status toggle and form submission
+        // function submitForm(userId) {
+        //     var statusBadge = document.getElementById('badge-' + userId);
+        //     var form = document.getElementById('statusForm-' + userId);
+        //     var currentStatus = statusBadge.innerText;  // Get current status (Active/Inactive)
+
+        //     // Toggle the status and update the badge
+        //     if (currentStatus === "Inactive") {
+        //         statusBadge.innerText = "Active";
+        //         statusBadge.classList.remove('bg-danger');
+        //         statusBadge.classList.add('bg-success');
+        //         form.elements['activity'].value = 'Active';  // Update hidden activity field to 'Active'
+        //     } else {
+        //         statusBadge.innerText = "Inactive";
+        //         statusBadge.classList.remove('bg-success');
+        //         statusBadge.classList.add('bg-danger');
+        //         form.elements['activity'].value = 'Inactive';  // Update hidden activity field to 'Inactive'
+        //     }
+
+        //     // Now submit the form with data
+        //     form.submit();
+        // }
+
+        // Logout confirmation
+        document.getElementById('logoutbtn').addEventListener('click', function(e) {
+            e.preventDefault();  // Prevent the default action (redirect)
+
+            // Show SweetAlert confirmation dialog
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to log out?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, log out',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // If confirmed, redirect to the logout URL
+                    window.location.href = '{% url "auth:logout" %}';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
