@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'ToDoList/css/style.css' %}">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container-fluid px-5">
+        
+        <div class="d-flex justify-content-center" style="width: 100%;">
+            <h1 style="color: grey">To Do List</h1>
+        </div>
+        <h3 class="m-0 mx-5 p-2">Hi, {{ user.username }}!</h3>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <div class="row-md mx-5 p-2" style="background-color: #f7bebe;min-height: 60vh;border-radius: 12px;">
+            <div class="d-flex justify-content-end" style="width: 100%;">
+
+                <button type="button" onclick="showPopup()" class="btn btn-success m-2">Add</button>
+                <button type="button" id="logoutbtn" class="btn btn-danger m-2">Logout</button>
+            </div>
+            <div class="p-5">
+                
+                {% if TaskList %}
+                    {% for TaskList in TaskList %}
+                        <div class="row" id="{{ TaskList.id }}" style="border-bottom: 1px dotted; {% if TaskList.status %} text-decoration: line-through; {% endif %}">
+                            <div class="col-md-1" style="border-right: 1px dotted;">
+                                {{ forloop.counter }}
+                            </div>
+                            <div class="col-md-7" style="border-right: 1px dotted;">
+                                {{ TaskList.list }}
+                            </div>
+                            <div class="col-md-2 d-flex justify-content-center" style="border-right: 1px dotted;"> 
+                                <form  method="post" action="{% url 'ToDoList:update_task_status'%}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="task_id" value="{{ TaskList.id }}" />
+                                    <input type="checkbox" name="status" value="true" onchange="submitForm(this)" {% if TaskList.status %} checked {% endif %} />
+                                </form>
+                            </div>
+                            <div class="col-md-2 d-flex justify-content-center">
+                                <a href="javascript:void(0)" class="delete-task" data-task-id="{{ TaskList.id }}">
+                                    <i class="fa-solid fa-trash fa" style="color: #f60404;"></i>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                 <div class="alert alert-info">
+                    No tasks to show, please add to get started.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<!-- Add SweetAlert2 CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+    function submitForm(checkbox) {
+        // Submit the form using its ID
+        var form = $(checkbox).closest('form');
+        form.submit();
+    }
+
+    document.getElementById('logoutbtn').addEventListener('click', function () {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You will be logged out of your account.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Logout!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to logout URL
+                window.location.href = "{% url 'auth:logout' %}";
+            }
+        });
+    });
+
+    $(document).on('click', '.delete-task', function() {
+        var taskId = $(this).attr('data-task-id');
+        // console.log(taskId);
+        Swal.fire({
+        title: 'Are you sure?',
+        text: 'This will delete the task!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Send AJAX request to delete the task
+                $.ajax({
+                    url: '{% url "ToDoList:deleteTask" %}',  // Your Django URL for deleting task
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    data: {
+                        'task_id': taskId  // Send the task ID to the backend
+                    },
+                    success: function(response) {
+                        Swal.fire('Deleted!',  response.message , 'success').then((result) => {
+                            if (result.isConfirmed) {
+                                // Redirect to home page after the user clicks "OK"
+                                window.location.href = '{% url "ToDoList:home" %}';  // Replace with your actual home URL
+                            }
+                        });
+                                    // $('#task-' + taskId).remove();  // Remove the task row from the DOM
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    }
+                });
+            }
+        });   
+    });
+    // Function to show SweetAlert popup
+    function showPopup() {
+      Swal.fire({
+        title: 'Enter the text to add',
+        input: 'text',
+        inputPlaceholder: 'Type something here...',
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        preConfirm: (value) => {
+          if (!value) {
+            Swal.showValidationMessage('You need to write something!');
+          }
+          return value;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Send the entered value to the Django view via AJAX
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  
+          $.ajax({
+            url: '{% url "ToDoList:addList" %}', // Replace with your Django view URL
+            type: 'POST',
+            headers: {
+              'X-CSRFToken': csrfToken
+            },
+            data: {
+              text: result.value
+            },
+            success: function(response) {
+            // Use the success message from the backend response
+            Swal.fire('Success!', response.message || 'Your data has been saved.', 'success').then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to home page after the user clicks "OK"
+                    window.location.href = '{% url "ToDoList:home" %}';  // Replace with your actual home URL
+                }
+            });
+            },
+            error: function(xhr) {
+            // Use the error message from the backend response, or fallback to a generic message
+            const errorResponse = xhr.responseJSON; // Extract JSON error response if available
+            Swal.fire('Error!', errorResponse?.error || 'Something went wrong.', 'error');
+            }
+          });
+        }
+      });
+    }
+  </script>
+  
+
+</html>
