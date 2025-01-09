@@ -1,1 +1,4 @@
 # user-specific-todolist
+This project was developed to understand and implement authentication and authorization in a Django-based application. The primary goal was to create a secure, user-specific To-Do List system. Each user could register, but their account required admin approval before they could log in, ensuring controlled access to the system. Role-based access was implemented, distinguishing between admins (who could approve or manage users) and regular users (who could manage their own tasks).
+
+Tasks were linked to individual users, enforcing ownership and privacy while preventing unauthorized access to others' data. By combining authentication with role-based authorization, the project ensured a structured, secure, and user-friendly experience. The outcome was a robust understanding of securing web applications while managing user-specific functionality efficiently.
